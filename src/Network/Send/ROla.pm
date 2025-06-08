@@ -1,12 +1,11 @@
-# File contributed by #gaaradodesertoo, #cry1493, #matheus8666, #megafuji, #ovorei, #__codeplay, #roxleopardo
 package Network::Send::ROla;
-
 use strict;
 use base qw(Network::Send::ServerType0);
 use Globals qw($net %config);
 use Utils qw(getTickCount);
 
 use Log qw(debug);
+
 
 sub new {
 	my ($class) = @_;
@@ -19,10 +18,10 @@ sub new {
 		'0360' => ['sync', '', []],
 		'0437' => ['actor_action', 'a4 C', [qw(targetID type)]],
 		'0361' => ['actor_look_at', 'v', [qw(headDir)]],
-		'009F' => ['item_take', 'a4', [qw(ID)]],
-		'00A2' => ['item_drop', 'a2 v', [qw(ID amount)]],
-		'0364' => ['storage_item_add', 'v2', [qw(index amount)]],
-		'0365' => ['storage_item_remove', 'v2', [qw(index amount)]],
+		'0362' => ['item_take', 'a4', [qw(ID)]],
+		'0363' => ['item_drop', 'v2', [qw(index amount)]],
+		'0364' => ['storage_item_add', 'a2 V', [qw(ID amount)]],
+		'0365' => ['storage_item_remove', 'a2 V', [qw(ID amount)]],
 		'0366' => ['skill_use_location', 'v3', [qw(lv skillID x y)]],
 		'0438' => ['skill_use', 'v2 a4', [qw(lv skillID targetID)]],
 		'07E4' => ['item_list_window_selected', 'v v', [qw(index amount)]],
@@ -41,10 +40,10 @@ sub new {
 		'0AC1' => ['rodex_refresh_maillist', '', []],
 		'09E9' => ['rodex_close_mailbox', '', []],
 		'022D' => ['homunculus_command', 'C', [qw(command)]],
-		'023B' => ['storage_password', 'Z24', [qw(password)]],
+		'023B' => ['storage_password', 'v a*', [qw(type data)]],
 		'096E' => ['merge_item_request', 'v a*', [qw(length itemList)]],
-
 	);
+
 
 	$self->{packet_list}{$_} = $packets{$_} for keys %packets;
 
@@ -116,50 +115,30 @@ sub reconstruct_master_login {
 }
 
 sub sendTokenToServer {
-    my ($self, $username, $password, $master_version, $version, $token, $length, $otp_ip, $otp_port) = @_;
-    my $len = $length + 92;
-    
-    my $ip = '192.168.0.2';
-    my $mac = $config{macAddress} || sprintf("%02x%02x%02x%02x%02x%02x", (int(rand(256)) & 0xFC) | 0x02, map { int(rand(256)) } 1..5);
-    my $mac_hyphen_separated = join '-', $mac =~ /(..)/g;
-    
-    $net->serverDisconnect();
-    $net->serverConnect($otp_ip, $otp_port);
+	my ($self, $username, $password, $master_version, $version, $token, $length, $otp_ip, $otp_port) = @_;
+	my $len =  $length + 92;
 
-    my $msg = $self->reconstruct({
-        switch => 'token_login',
-        len => $len,
-        version => $version || $self->version,
-        master_version => $master_version,
-        username => $username,
-        mac_hyphen_separated => $mac_hyphen_separated,
-        ip => $ip,
-        token => $token,
-    });
-    
-    $self->sendToServer($msg);
+	$net->serverDisconnect();
+	$net->serverConnect($otp_ip, $otp_port);
 
-    debug "Sent sendTokenLogin\n", "sendPacket", 2;
-}
+	my $ip = '192.168.0.2';
+	my $mac = $config{macAddress} || '111111111111'; # gibberish
+	my $mac_hyphen_separated = join '-', $mac =~ /(..)/g;
 
-sub add_checksum {
-	my ($self, $msg) = @_;
+	my $msg = $self->reconstruct({
+		switch => 'token_login',
+		len => $len,
+		version => $version || $self->version,
+		master_version => $master_version,
+		username => $username,
+		mac_hyphen_separated => $mac_hyphen_separated,
+		ip => $ip,
+		token => $token,
+	});
 
-	my $crc = 0x00;
-	for my $byte (unpack('C*', $msg)) {
-		$crc ^= $byte;
-		for (1..8) {
-			if ($crc & 0x80) {
-				$crc = (($crc << 1) ^ 0x07) & 0xFF;
-			} else {
-				$crc = ($crc << 1) & 0xFF;
-			}
-		}
-	}
+	$self->sendToServer($msg);
 
-	# Anexa o checksum ao final da mensagem
-	$msg .= pack('C', $crc);
-	return $msg;
+	debug "Sent sendTokenLogin\n", "sendPacket", 2;
 }
 
 sub sendMapLogin {
@@ -177,9 +156,21 @@ sub sendMapLogin {
 		sex			=> $sex,
 	});
 
-	$msg = $self->add_checksum($msg);
+	my $crcCheckSum = 0x00;
+	for my $byte (unpack('C*', $msg)) {
+		$crcCheckSum ^= $byte;
+		for (1..8) {
+			if ($crcCheckSum & 0x80) {
+				$crcCheckSum = (($crcCheckSum << 1) ^ 0x07) & 0xFF;
+			} else {
+				$crcCheckSum = ($crcCheckSum << 1) & 0xFF;
+			}
+		}
+	}
+
+	$msg .= pack('C', $crcCheckSum);
 	$self->sendToServer($msg);
-	
+
 	debug "Sent sendMapLogin\n", "sendPacket", 2;
 }
 
