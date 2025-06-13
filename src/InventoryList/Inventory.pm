@@ -40,7 +40,7 @@ sub onMapChange {
 	my ($self) = @_;
 	return if $masterServer->{itemListType};
 	$self->{state} = MAP_LOADED_OR_NEW;
-	$self->clear();
+	#$self->clear();
 }
 
 sub item_max_stack {
