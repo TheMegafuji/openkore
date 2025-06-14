@@ -1,0 +1,24 @@
+services:
+  bot1:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: openkore-bot1
+    volumes:
+      - ./docker/config1:/openkore/docker/config1
+    working_dir: /openkore
+    command: ["perl", "openkore.pl", "--config", "./docker/config1/control/config.txt"]    
+    stdin_open: true
+    tty: true  
+
+  bot2:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: openkore-bot2
+    volumes:
+      - ./docker/config2:/openkore/docker/config2
+    working_dir: /openkore
+    command: ["perl", "openkore.pl", "--config", "./docker/config2/control/config.txt"]    
+    stdin_open: true
+    tty: true
