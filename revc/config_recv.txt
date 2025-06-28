@@ -5,8 +5,8 @@ instanceRAddress=B8DA60
 recvPtrAddress=1467C20
 
 # Configurações do servidor xKore
-koreServerIP=172.65.175.70
-koreServerPort=2350
+koreServerIP=172.65.125.206
+koreServerPort=2351
 
 # Configurações de hotkeys (opcional)
 # Formato: [Ctrl+][Shift+]TECLA

@@ -21,8 +21,8 @@ forceMapIP
 
 # 1 = hook into RO client, 2 = Act as stand-alone proxy, proxy = act as true proxy
 # https://openkore.com/wiki/XKore
-XKore 0
-XKore_port 2350
+XKore 1
+XKore_port 2351
 XKore_dll NetRedirect.dll
 XKore_injectDLL 0
 XKore_autoAttachIfOneExe 0
@@ -31,8 +31,8 @@ XKore_bypassBotDetection 0
 XKore_exeName ragexe.exe
 
 # XKore 1 / Proxy configuration
-XKore_hookIp 127.0.0.1
-XKore_hookport 2350
+XKore_hookIp 172.65.125.206
+XKore_hookport 2351
 
 # XKore 2 / Proxy configuration
 XKore_listenIp 127.0.0.1
